@@ -2,9 +2,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.concurrent.Flow;
 
-public class MiddlePanel extends JPanel {
+public class MiddlePanel extends Panels {
     final int x = 0;
     final int y = 0;
     final int width = 1024;
@@ -12,6 +13,11 @@ public class MiddlePanel extends JPanel {
     JLabel label = new JLabel();
     DefaultListModel<JButton> listModel = new DefaultListModel<>();
     JList<JButton> buttonList = new JList<>(listModel);
+
+    ImageIcon plus = processimage("Images/add-symbol.png",50,50);
+    ImageIcon minus = processimage("Images/minus.png",45,45);
+    ImageIcon up = processimage("Images/up-arrow.png",45,45);
+    ImageIcon down = processimage("Images/down-arrow.png",45,45);
     public MiddlePanel() {
         SwingUtilities.invokeLater(() -> {
             initGUI();
@@ -24,6 +30,8 @@ public class MiddlePanel extends JPanel {
             JButton button = new JButton("Button " + i);
             button.setFocusable(false);
             button.addActionListener(new ButtonClickListener());
+
+
             listModel.addElement(button);
         }
 
@@ -36,25 +44,71 @@ public class MiddlePanel extends JPanel {
 
 
         // Create buttons
-        JButton addButton = new JButton("Add Button");
-        addButton.setBackground(Color.GRAY);
-        addButton.setBorder(BorderFactory.createEmptyBorder());
+        JButton addButton = new JButton();
+        addButton.setIcon(plus);
+        addButton.setBackground(new Color(186,188,189));
+        addButton.setBorder(BorderFactory.createLineBorder(Color.black));
         addButton.setFocusable(false);
-        JButton removeButton = new JButton("Remove Selected");
-        JButton upButton = new JButton("up");
-        JButton downButton = new JButton("down");
+        addButton.setFocusPainted(false);
+
+        JButton removeButton = new JButton();
+        removeButton.setIcon(minus);
+        removeButton.setBackground(new Color(186,188,189));
+        removeButton.setBorder(BorderFactory.createLineBorder(Color.black));
+        removeButton.setFocusable(false);
+        removeButton.setFocusPainted(false);
+
+
+        JButton upButton = new JButton();
+        upButton.setIcon(up);
+        upButton.setBackground(new Color(186,188,189));
+        upButton.setBorder(BorderFactory.createLineBorder(Color.black));
+        upButton.setFocusable(false);
+        upButton.setFocusPainted(false);
+
+
+        JButton downButton = new JButton();
+        downButton.setIcon(down);
+        downButton.setBackground(new Color(186,188,189));
+        downButton.setBorder(BorderFactory.createLineBorder(Color.black));
+        downButton.setFocusable(false);
+        downButton.setFocusPainted(false);
 
         // Add ActionListener to the buttons
         addButton.addActionListener(e -> {
-            JButton newButton = new JButton("New Button");
-            newButton.addActionListener(new ButtonClickListener());
-            listModel.addElement(newButton);
+            JFileChooser fileChooser = new JFileChooser();
+            int response = fileChooser.showOpenDialog(null);
+            if (response == JFileChooser.APPROVE_OPTION) {
+                File file = new File(fileChooser.getSelectedFile().getName());
+                JButton newButton = new JButton(file.getName().split("\\.")[0]);
+                newButton.addActionListener(new ButtonClickListener());
+                listModel.addElement(newButton);
+            }
         });
 
         removeButton.addActionListener(e -> {
             int selectedIndex = buttonList.getSelectedIndex();
             if (selectedIndex != -1) {
                 listModel.remove(selectedIndex);
+            }
+        });
+        upButton.addActionListener(e-> {
+            int selectedIndex = buttonList.getSelectedIndex();
+            if (selectedIndex > 0) {JButton selectedButton = listModel.getElementAt(selectedIndex);
+                listModel.setElementAt(listModel.getElementAt(selectedIndex - 1), selectedIndex);
+                listModel.setElementAt(selectedButton, selectedIndex - 1);
+                buttonList.setSelectedIndex(selectedIndex - 1);
+            }
+        });
+        downButton.addActionListener(e-> {
+            int selectedIndex = buttonList.getSelectedIndex();
+            int lastIndex = listModel.getSize() - 1;
+
+            if (selectedIndex >= 0 && selectedIndex < lastIndex) { // Sprawdzamy, czy wybrany przycisk nie jest już na dole listy
+                JButton selectedButton = listModel.getElementAt(selectedIndex);
+                listModel.setElementAt(listModel.getElementAt(selectedIndex + 1), selectedIndex);
+                listModel.setElementAt(selectedButton, selectedIndex + 1);
+                buttonList.setSelectedIndex(selectedIndex + 1);
             }
         });
 
@@ -89,18 +143,27 @@ public class MiddlePanel extends JPanel {
         @Override
         public Component getListCellRendererComponent(JList<? extends JButton> list, JButton value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
+            value.setBackground(isSelected ? new Color(255,253,208) : new Color(186,188,189));
 
             value.setForeground(isSelected ? Color.BLACK : Color.BLACK);
-            value.setBorderPainted(isSelected);
+            Dimension buttonSize = new Dimension(value.getPreferredSize().width, 35);
+            value.setPreferredSize(buttonSize);
+            value.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             return value;
         }
     }
-
+   protected ImageIcon processimage(String FILE,int width,int height){
+        ImageIcon icon = new ImageIcon(FILE);
+        Image image = icon.getImage();
+        Image newing = image.getScaledInstance(width, height,  Image.SCALE_SMOOTH);
+        icon = new ImageIcon(newing);
+        return icon;
+    }
     private class ButtonClickListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             JButton clickedButton = (JButton) e.getSource();
-            label.setText("Clicked Button: " + clickedButton.getText());
+
         }
     }
 }
