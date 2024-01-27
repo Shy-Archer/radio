@@ -5,47 +5,71 @@ import java.util.Scanner;
 
 public class Client {
     private static final int PORT = 12345;
-    // private static final int MAX_FILENAME_SIZE = 256;
-    private static final int MAX_BUFFER_SIZE = 1024;
+    private static final String SERVER_IP = "127.0.0.1";
+    private static final int BUFFER_SIZE = 4096;
 
     private static Socket clientSocket;
 
-    private static void handleUpload() {
-        // Scanner scanner = new Scanner(System.in);
-
-        try(Scanner scanner = new Scanner(System.in) ) {
+    private static void handleUpload() throws InterruptedException {
+        try {
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+            printWriter.write("upload");
+            printWriter.flush();
+            Thread.sleep(1000);
             System.out.print("Enter filename to upload: ");
-            String filename = scanner.nextLine();
+            String filename = "sound.mp3"; // Replace with the actual path to your mp3 file
 
-            File file = new File(filename);
-            FileInputStream fileInputStream = new FileInputStream(file);
+           
+            // Opening file input stream
+            FileInputStream fileInputStream = new FileInputStream(filename);
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
 
+          
+            // Opening output stream to send file to server
             OutputStream outputStream = clientSocket.getOutputStream();
-            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
-            dataOutputStream.writeUTF("upload");
-            dataOutputStream.writeUTF(filename);
+            // Sending file name to server
+            printWriter.write(filename);
+            printWriter.flush();
+            Thread.sleep(1000);
+            String fileDataSignal = "START_FILE_DATA";
+            printWriter.write(fileDataSignal);
+            printWriter.flush();
 
-            byte[] buffer = new byte[MAX_BUFFER_SIZE];
+            // Sending file content to server
+            byte[] buffer = new byte[BUFFER_SIZE];
             int bytesRead;
-
-            while ((bytesRead = bufferedInputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, bytesRead);
+            while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+                bufferedOutputStream.write(buffer, 0, bytesRead);
+                
             }
+            bufferedOutputStream.flush();
+            printWriter.flush();
 
-            fileInputStream.close();
+                    // Signal the end of file transmission
+            printWriter.write("END_OF_FILE");
+            printWriter.flush();
+            
+            
+            // Closing streams
+          
+            bufferedOutputStream.flush();
+            printWriter.flush();
+            // clientSocket.shutdownOutput();
+
+            System.out.println("File " + filename + " uploaded successfully.");
+            
         } catch (IOException e) {
             e.printStackTrace();
-        } //finally {scanner.close();}
+        }
     }
 
     private static void handleSkip() {
         try {
-            OutputStream outputStream = clientSocket.getOutputStream();
-            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-
-            dataOutputStream.writeUTF("skip");
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(),true);
+            printWriter.write("skip");
+            printWriter.flush();
             System.out.println("Sending skip");
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,22 +78,34 @@ public class Client {
 
     private static void handleViewQueue() {
         try {
-            OutputStream outputStream = clientSocket.getOutputStream();
-            DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(),true);
+            
+            printWriter.write("view");
+            printWriter.flush();
 
-            dataOutputStream.writeUTF("view\n");
+           BufferedReader intReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            int qlen = intReader.read();
+            System.out.println("i:" + qlen);
 
-            InputStream inputStream = clientSocket.getInputStream();
-            DataInputStream dataInputStream = new DataInputStream(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String queueInfo;
+            System.out.println("\nCurrent queue:");
+           
+            for(int i=0; i < qlen; i++){
+                System.out.println("\nCurrent:");
+                queueInfo = bufferedReader.readLine();
+                System.out.println(queueInfo);
+                
+            }
 
-            String queueInfo = dataInputStream.readUTF();
-            System.out.println("Current queue:\n" + queueInfo);
+       
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private static void handleQuit() {
+        System.out.println("quit");
         try {
             OutputStream outputStream = clientSocket.getOutputStream();
             DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
@@ -84,7 +120,7 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Scanner scanner = null;
         try {
             clientSocket = new Socket("127.0.0.1", PORT);
@@ -99,12 +135,16 @@ public class Client {
                 System.out.println("4. Quit");
 
                 scanner = new Scanner(System.in);
-                System.out.print("Enter your choice: " + scanner + "\n\n");
+           
+                System.out.print("Enter your choice: \n\n");
                 int choice = scanner.nextInt();
-                System.out.print("Enter your choice: " + scanner + "\n\n");
+                scanner.nextLine();  // Consume the newline character
+
                 switch (choice) {
                     case 1:
+                        
                         handleUpload();
+                        
                         break;
                     case 2:
                         handleSkip();
