@@ -148,37 +148,37 @@ void handleUpload(int clientSocket, AudioQueue* audioQueue) {
 
     size_t totalBytesReceived = 0;
     char buffer[MAX_BUFFER_SIZE];
+    char* endOfFileSignal = "END_OF_FILE";
+    size_t endOfFileSignalLength = strlen(endOfFileSignal);
 
-    while (!feof(file)) {
+    while (1) {
         ssize_t bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
-
-        printf(" bytes received: %ld\n", bytesRead);
-        
 
         if (bytesRead <= 0) {
             // Błąd lub zakończenie połączenia przez klienta
             break;
         }
 
-        // Sprawdzenie, czy otrzymano sygnał "END_OF_FILE"
-        if (strcmp(buffer, "END_OF_FILE") == 0) {
+        // Sprawdzenie, czy na końcu bufora jest sygnał "END_OF_FILE"
+        if (bytesRead >= endOfFileSignalLength &&
+            memcmp(buffer + bytesRead - endOfFileSignalLength, endOfFileSignal, endOfFileSignalLength) == 0) {
             printf("Received END_OF_FILE signal. Transmission completed.\n");
+            // Usunięcie sygnału "END_OF_FILE" z danych zapisywanych do pliku
+            totalBytesReceived -= endOfFileSignalLength;
             break;
         }
-
-
 
         // Zapisywanie danych do pliku
         fwrite(buffer, 1, bytesRead, file);
         totalBytesReceived += bytesRead;
         printf("Total bytes received: %ld\n", totalBytesReceived);
         if (totalBytesReceived >= 53000000) {
-           
             // Limit wielkości pliku osiągnięty
             break;
         }
-        
     }
+            
+    
     fclose(file);
     bzero(buffer, sizeof(buffer));
     printf("Leave saving file\n");
@@ -191,6 +191,7 @@ void handleUpload(int clientSocket, AudioQueue* audioQueue) {
 
     printf("File %s uploaded to the queue.\n\n", filename);
 }
+
 
 
 void handleSkip(AudioQueue* audioQueue) {
