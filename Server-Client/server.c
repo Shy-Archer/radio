@@ -214,9 +214,9 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
     } while (i != (audioQueue->rear + 1) % MAX_QUEUE_SIZE);
     printf("i:%d, rear:%d, front:%d\n", i, audioQueue->rear + 1, audioQueue->front);
     int qlen = i - audioQueue->front;
+    printf("qlen:%d, %lu, %lu\n", qlen, sizeof(qlen), sizeof(queueInfo));
     send(clientSocket, &qlen, sizeof(qlen), 0);
     sleep(1);
-    printf("x");
     // Wysłanie informacji o kolejce do klienta
     send(clientSocket, queueInfo, sizeof(queueInfo), 0);
     // Opcjonalnie: Wysłanie pustej linii, aby oznaczyć koniec informacji
@@ -224,6 +224,55 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
     i = 0;
     qlen = 0;
     bzero(queueInfo, sizeof(queueInfo));
+}
+void sendFileFromQueue(int clientSocket, AudioQueue* audioQueue) {
+    char filename[MAX_FILENAME_SIZE];
+    bzero(filename, sizeof(filename));
+
+    // Sprawdzenie, czy kolejka jest pusta
+    if (isQueueEmpty(audioQueue)) {
+        const char* noFilesSignal = "NO_FILES";
+        send(clientSocket, noFilesSignal, strlen(noFilesSignal), 0);
+        return;
+    }
+
+    // Pobranie nazwy pliku z kolejki
+    strcpy(filename, audioQueue->queue[audioQueue->front].filename);
+
+    // Przygotowanie ścieżki do pliku
+    char filepath[MAX_FILENAME_SIZE + 50];  // Dodatkowe miejsce na ścieżkę
+    snprintf(filepath, sizeof(filepath), "/home/czarka/Projekt/server_queue/%s", filename);
+
+    // Otwarcie pliku do odczytu
+    FILE* file = fopen(filepath, "rb");
+    if (file == NULL) {
+        perror("Error opening file for reading");
+        return;
+    }
+
+    // Wysłanie nazwy pliku do klienta
+    send(clientSocket, filename, sizeof(filename), 0);
+
+    // Wysłanie sygnału "START_FILE_DATA"
+    const char* fileDataSignal = "START_FILE_DATA";
+    send(clientSocket, fileDataSignal, strlen(fileDataSignal), 0);
+
+    // Wysyłanie zawartości pliku do klienta
+    char buffer[MAX_BUFFER_SIZE];
+    size_t bytesRead;
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+        send(clientSocket, buffer, bytesRead, 0);
+    }
+
+    // Wysłanie sygnału "END_OF_FILE" jako znacznika zakończenia przesyłania pliku
+    const char* endOfFileSignal = "END_OF_FILE";
+    send(clientSocket, endOfFileSignal, strlen(endOfFileSignal), 0);
+
+    fclose(file);
+    printf("File %s sent to the client.\n", filename);
+
+    // Usunięcie pliku z kolejki po wysłaniu
+    dequeue(audioQueue);
 }
 
 void handleClientRequest(int clientSocket, AudioQueue* audioQueue) {
@@ -261,7 +310,11 @@ void handleClientRequest(int clientSocket, AudioQueue* audioQueue) {
             clientSocket = -1;
             printf("Client disconnected \n\n");
             break;  // Exit the loop when the client disconnects
-        } else {
+
+        } 
+        else if (strcmp(buffer, "download_and_delete") == 0) {
+            sendFileFromQueue(clientSocket, audioQueue);}
+        else {
             printf("Unknown command received.\n\n");
         }
     }
