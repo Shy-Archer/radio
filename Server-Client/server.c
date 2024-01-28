@@ -190,6 +190,9 @@ void handleUpload(int clientSocket, AudioQueue* audioQueue) {
     enqueue(audioQueue, filename);
 
     printf("File %s uploaded to the queue.\n\n", filename);
+
+    int num = 0;
+    send(clientSocket, &num, sizeof(num), 0);
 }
 
 
@@ -213,7 +216,7 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
         i = (i + 1) % MAX_QUEUE_SIZE;
     } while (i != (audioQueue->rear + 1) % MAX_QUEUE_SIZE);
     printf("i:%d, rear:%d, front:%d\n", i, audioQueue->rear + 1, audioQueue->front);
-    int qlen = i - audioQueue->front;
+    int qlen = audioQueue->rear + 1 - audioQueue->front;
     printf("qlen:%d, %lu, %lu\n", qlen, sizeof(qlen), sizeof(queueInfo));
     send(clientSocket, &qlen, sizeof(qlen), 0);
     sleep(1);
