@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.Socket;
 
 public class DownPanel extends Panels implements ActionListener {
     final int x = 0;
@@ -22,13 +23,18 @@ public class DownPanel extends Panels implements ActionListener {
     final int rewind_Y = 40;
     final int rewind_width = 55;
     final int rewind_height = 55;
+
+    Client cl;
+    Socket cs;
     JButton play;
     boolean state = false;
     ImageIcon playicon = processimage("Images/play-button.png",50,50);
     ImageIcon skipicon = processimage("Images/skip-button.png",50,50);
     ImageIcon rewindicon = processimage("Images/fast-rewind-button.png",35,35);
     ImageIcon pauseicon = processimage("Images/video-pause-button.png",50,50);
-    DownPanel(){
+    DownPanel(Client client){
+        cl = client;
+        cs = cl.getClientSocket();
         this.setLayout(null);
 
 
@@ -81,18 +87,24 @@ public class DownPanel extends Panels implements ActionListener {
     }
     @Override
     public void actionPerformed(ActionEvent e){
-        if (e.getSource()==play){
-            if (state == false){
+        if (e.getSource() == play) {
+            if (state == false) {
                 play.setIcon(pauseicon);
-             
-                state = true;
-            }
-            else{
+
+                // Use a loop for continuous playback
+                while (state == false) {
+                    try {
+                        cl.handleDownloadAndDelete();
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+
+            } else {
                 play.setIcon(playicon);
                 state = false;
             }
         }
-
     }
 
 }

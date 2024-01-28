@@ -4,10 +4,11 @@ import jaco.mp3.player.MP3Player;
 
 import java.io.*;
 import java.net.*;
+import java.util.LinkedList;
 import java.util.Scanner;
 import javax.sound.sampled.*;
 
-public class Client implements LineListener{
+public class Client implements LineListener {
 
     boolean isPlaybackCompleted;
 
@@ -24,22 +25,21 @@ public class Client implements LineListener{
     private static final int PORT = 12345;
     private static final String SERVER_IP = "127.0.0.1";
     private static final int BUFFER_SIZE = 4096;
-
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
     private static Socket clientSocket;
 
-    private static void handleUpload() throws InterruptedException {
+    public void handleUpload(String fullPath,String filename) throws InterruptedException {
         try {
-            String filePath = "/home/czarka/IdeaProjects/radio/sound/";
+
             PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
             printWriter.write("upload");
             printWriter.flush();
             Thread.sleep(1000);
+            System.out.println(clientSocket);
 
-            Scanner scanner = new Scanner(System.in);
-            System.out.print("Enter filename to upload: ");
-            String filename = scanner.nextLine();
-//            String filename = "sound/s.mp3"; // Replace with the actual path to your mp3 file
-            String fullPath = filePath + filename;
+
 
             // Opening file input stream
             FileInputStream fileInputStream = new FileInputStream(fullPath);
@@ -88,7 +88,7 @@ public class Client implements LineListener{
 
     private static void handleSkip() {
         try {
-            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(),true);
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
             printWriter.write("skip");
             printWriter.flush();
             System.out.println("Sending skip");
@@ -96,7 +96,8 @@ public class Client implements LineListener{
             e.printStackTrace();
         }
     }
-    private static void handleDownloadAndDelete() throws InterruptedException{
+
+    public  void handleDownloadAndDelete() throws InterruptedException {
         try {
             PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
             printWriter.write("download_and_delete");
@@ -134,7 +135,7 @@ public class Client implements LineListener{
             // Zamykanie strumieni
             bufferedOutputStream.flush();
             fileOutputStream.close();
-            inputStream.close();
+           // inputStream.close();
 
             System.out.println("File downloaded: " + filename);
 
@@ -170,12 +171,15 @@ public class Client implements LineListener{
 
 
     private static void playAudio(String filename) {
-        try{
+        try {
 //            String bip = filename;
+
             MP3Player mp3player = new MP3Player(new File(filename));
+
             mp3player.play();
+            if (!mp3player.isPaused()){}
         } catch (Exception e) {
-                e.printStackTrace();
+            e.printStackTrace();
         }
 //        MP3Player mp3player = new MP3Player(new File("src/s.mp3"));
 //        mp3player.play();
@@ -190,9 +194,11 @@ public class Client implements LineListener{
 //            }
 //        });
     }
-    private static void handleViewQueue() {
+
+    public LinkedList<String> handleViewQueue() {
+        LinkedList<String> queueInfo = new LinkedList<String>();
         try {
-            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(),true);
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
 
             printWriter.write("view");
             printWriter.flush();
@@ -202,13 +208,13 @@ public class Client implements LineListener{
             System.out.println("i:" + qlen);
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            String queueInfo;
+
             System.out.println("\nCurrent queue:");
 
-            for(int i=0; i < qlen; i++){
+            for (int i = 0; i < qlen; i++) {
                 System.out.println("\nCurrent:");
-                queueInfo = bufferedReader.readLine();
-                System.out.println(queueInfo);
+                queueInfo.add(bufferedReader.readLine());
+                System.out.println(queueInfo.get(i));
 
             }
 
@@ -216,6 +222,7 @@ public class Client implements LineListener{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return queueInfo;
     }
 
     private static void handleQuit() {
@@ -234,61 +241,13 @@ public class Client implements LineListener{
         }
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        javafx.application.Platform.startup(() -> {});
-        Scanner scanner = null;
-        try {
-            clientSocket = new Socket("127.0.0.1", PORT);
+    Client() throws IOException {
+        try{
+        clientSocket = new Socket("127.0.0.1", PORT);
 
-            System.out.println("Connected to the server.");
-
-            while (true) {
-                System.out.println("\nOptions:");
-                System.out.println("1. Upload a file");
-                System.out.println("2. Skip to the next file");
-                System.out.println("3. View current queue");
-                System.out.println("4. Quit");
-                System.out.println("5. Download and play");
-
-                scanner = new Scanner(System.in);
-
-                System.out.print("Enter your choice: \n\n");
-                int choice = scanner.nextInt();
-                scanner.nextLine();  // Consume the newline character
-
-                switch (choice) {
-                    case 1:
-
-                        handleUpload();
-
-                        break;
-                    case 2:
-                        handleSkip();
-                        break;
-                    case 3:
-                        handleViewQueue();
-                        break;
-                    case 4:
-                        handleQuit();
-                        break;
-                    case 5:
-                        handleDownloadAndDelete();
-//                        try {
-//                            playAudio("src/s.mp3");
-//                            // Step 1: Load the audio file
-//
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-
-                        break;
-
-                    default:
-                        System.out.println("Invalid choice. Try again.");
-                }
-            }
-        } catch (IOException e) {
+        System.out.println("Connected to the server.");}
+        catch (IOException e) {
             e.printStackTrace();
-        } finally {if (scanner != null) {scanner.close();}}
+        }
     }
 }

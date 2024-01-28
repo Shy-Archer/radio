@@ -3,6 +3,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.net.Socket;
+import java.util.LinkedList;
 import java.util.concurrent.Flow;
 
 public class MiddlePanel extends Panels {
@@ -13,27 +15,31 @@ public class MiddlePanel extends Panels {
     JLabel label = new JLabel();
     DefaultListModel<JButton> listModel = new DefaultListModel<>();
     JList<JButton> buttonList = new JList<>(listModel);
-
+    LinkedList<String> queuelist;
+    Client cl;
+    Socket cs;
     ImageIcon plus = processimage("Images/add-symbol.png",50,50);
     ImageIcon minus = processimage("Images/minus.png",45,45);
     ImageIcon up = processimage("Images/up-arrow.png",45,45);
     ImageIcon down = processimage("Images/down-arrow.png",45,45);
-    public MiddlePanel() {
+    public MiddlePanel(Client client) {
+        cl = client;
+        cs = cl.getClientSocket();
         SwingUtilities.invokeLater(() -> {
             initGUI();
         });
     }
 
     private void initGUI() {
-
-        for (int i = 1; i <= 40; i++) {
-            JButton button = new JButton("Button " + i);
+       // queuelist = cl.handleViewQueue();
+      /* for (String i : queuelist) {
+            JButton button = new JButton(i);
             button.setFocusable(false);
             button.addActionListener(new ButtonClickListener());
 
 
             listModel.addElement(button);
-        }
+        }*/
 
         // Set a custom cell renderer for the JList
         buttonList.setCellRenderer(new ButtonListRenderer());
@@ -79,9 +85,11 @@ public class MiddlePanel extends Panels {
             JFileChooser fileChooser = new JFileChooser();
             int response = fileChooser.showOpenDialog(null);
             if (response == JFileChooser.APPROVE_OPTION) {
-                File file = new File(fileChooser.getSelectedFile().getName());
+                File file = fileChooser.getSelectedFile();
                 JButton newButton = new JButton(file.getName().split("\\.")[0]);
                 newButton.addActionListener(new ButtonClickListener());
+                FileUploadWorker uploadWorker = new FileUploadWorker(file.getAbsolutePath(), file.getName(), cs);
+                uploadWorker.execute();
                 listModel.addElement(newButton);
             }
         });
@@ -111,15 +119,28 @@ public class MiddlePanel extends Panels {
                 buttonList.setSelectedIndex(selectedIndex + 1);
             }
         });
+        JButton viewQueueButton = new JButton("View Queue");
+        viewQueueButton.addActionListener(e -> {
+            queuelist = cl.handleViewQueue();
+            for (String i : queuelist) {
+                JButton button = new JButton(i);
+                button.setFocusable(false);
+                button.addActionListener(new ButtonClickListener());
+
+
+                listModel.addElement(button);
+            }
+        });
 
         // Create a panel to hold buttons
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new GridLayout(4,1,0,10));
+        buttonPanel.setLayout(new GridLayout(5,1,0,10));
         buttonPanel.setBackground(Color.GRAY);
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
         buttonPanel.add(upButton);
         buttonPanel.add(downButton);
+        buttonPanel.add(viewQueueButton);
 
         // Set the layout manager to BorderLayout
        // setLayout(new BorderLayout());

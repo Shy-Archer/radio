@@ -3,7 +3,7 @@ import java.awt.*;
 
 
 public class frame extends JFrame {
-    frame(int width,int height ,String title){
+    frame(int width,int height ,String title,Client client){
 
         this.setTitle(title);
 
@@ -14,10 +14,10 @@ public class frame extends JFrame {
         this.setVisible(true);
         this.setLayout(null);
         this.getContentPane().setBackground(new Color(128,128,128));
-
-        this.getContentPane().add(new MiddlePanel());
+        System.out.println(client);
+        this.getContentPane().add(new MiddlePanel(client));
        // this.getContentPane().add(new UpperPanel());
-        this.getContentPane().add(new DownPanel());
+        this.getContentPane().add(new DownPanel(client));
 
 
     }

@@ -130,7 +130,7 @@ void handleUpload(int clientSocket, AudioQueue* audioQueue) {
     printf("Received filename: %s\n", filename);
 
     char filepath[MAX_FILENAME_SIZE + 50];  // Dodatkowe miejsce na ścieżkę
-    snprintf(filepath, sizeof(filepath), "/home/czarka/Projekt/server_queue/%s", filename);
+    snprintf(filepath, sizeof(filepath), "/home/czarka/IdeaProjects/radio/Server-Client/server_queue/%s", filename);
 
     // Odbieranie zawartości pliku od klienta
     FILE* file = fopen(filepath, "wb");
@@ -241,7 +241,7 @@ void sendFileFromQueue(int clientSocket, AudioQueue* audioQueue) {
 
     // Przygotowanie ścieżki do pliku
     char filepath[MAX_FILENAME_SIZE + 50];  // Dodatkowe miejsce na ścieżkę
-    snprintf(filepath, sizeof(filepath), "/home/czarka/Projekt/server_queue/%s", filename);
+    snprintf(filepath, sizeof(filepath), "/home/czarka/IdeaProjects/radio/Server-Client/server_queue/%s", filename);
 
     // Otwarcie pliku do odczytu
     FILE* file = fopen(filepath, "rb");
