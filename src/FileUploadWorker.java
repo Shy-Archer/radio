@@ -1,12 +1,7 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 public class FileUploadWorker extends SwingWorker<Void, Void> {
     private final String fullPath;
@@ -71,6 +66,9 @@ public class FileUploadWorker extends SwingWorker<Void, Void> {
             // clientSocket.shutdownOutput();
 
             System.out.println("File " + filename + " uploaded successfully.");
+            BufferedReader intReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            int num = intReader.read();
+            System.out.println("Check:" + num);
 
         }catch (IOException | InterruptedException e) {
             e.printStackTrace();

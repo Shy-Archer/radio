@@ -81,6 +81,9 @@ public class Client implements LineListener {
             // clientSocket.shutdownOutput();
 
             System.out.println("File " + filename + " uploaded successfully.");
+            BufferedReader intReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            int num = intReader.read();
+            System.out.println("Check:" + num);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -223,6 +226,10 @@ public class Client implements LineListener {
             System.out.println("\nCurrent queue:");
 
             for (int i = 0; i < qlen; i++) {
+                if (qlen > 10) {
+                    System.out.println("Sorry. Had troubles displaying queue.");
+                    break;
+                }
                 System.out.println("\nCurrent:");
                 queueInfo.add(bufferedReader.readLine());
                 System.out.println(queueInfo.get(i));

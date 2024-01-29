@@ -177,14 +177,10 @@ void handleUpload(int clientSocket, AudioQueue* audioQueue) {
             break;
         }
     }
-            
     
     fclose(file);
     bzero(buffer, sizeof(buffer));
     printf("Leave saving file\n");
-
-
-    
 
     // Dodawanie pliku do kolejki
     enqueue(audioQueue, filename);
@@ -206,6 +202,14 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
     printf("Enter view \n");
     printQueue(audioQueue);
 
+    int qlen;
+    if (audioQueue->front <= audioQueue->rear) {
+        qlen = audioQueue->rear - audioQueue->front + 1;
+    } else {
+        qlen = MAX_QUEUE_SIZE - audioQueue->front + audioQueue->rear + 1;
+    }
+
+    printf("qlen:%d\n", qlen);
     // Przygotowanie informacji o kolejce
     char queueInfo[MAX_BUFFER_SIZE];
     bzero(queueInfo, sizeof(queueInfo));
@@ -216,7 +220,7 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
         i = (i + 1) % MAX_QUEUE_SIZE;
     } while (i != (audioQueue->rear + 1) % MAX_QUEUE_SIZE);
     printf("i:%d, rear:%d, front:%d\n", i, audioQueue->rear + 1, audioQueue->front);
-    int qlen = audioQueue->rear + 1 - audioQueue->front;
+//    int qlen = audioQueue->rear + 1 - audioQueue->front;
     printf("qlen:%d, %lu, %lu\n", qlen, sizeof(qlen), sizeof(queueInfo));
     send(clientSocket, &qlen, sizeof(qlen), 0);
     sleep(1);
