@@ -3,7 +3,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.Socket;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 public class DownPanel extends Panels implements ActionListener {
     final int x = 0;
     final int y = 615;
@@ -27,22 +28,27 @@ public class DownPanel extends Panels implements ActionListener {
     Client cl;
     Socket cs;
     JButton play;
+    JButton skip;
+
+    JButton rewind;
     boolean state = false;
-    ImageIcon playicon = processimage("Images/play-button.png",50,50);
-    ImageIcon skipicon = processimage("Images/skip-button.png",50,50);
-    ImageIcon rewindicon = processimage("Images/fast-rewind-button.png",35,35);
-    ImageIcon pauseicon = processimage("Images/video-pause-button.png",50,50);
-    DownPanel(Client client){
+    private ExecutorService executorService;
+    ImageIcon playicon = processimage("Images/play-button.png", 50, 50);
+    ImageIcon skipicon = processimage("Images/skip-button.png", 50, 50);
+    ImageIcon rewindicon = processimage("Images/fast-rewind-button.png", 35, 35);
+    ImageIcon pauseicon = processimage("Images/video-pause-button.png", 50, 50);
+
+    DownPanel(Client client) {
         cl = client;
         cs = cl.getClientSocket();
         this.setLayout(null);
 
-
+        executorService = Executors.newFixedThreadPool(1);
         play = new JButton();
-        JButton skip = new JButton();
-        JButton rewind = new JButton();
+        skip = new JButton();
+        rewind = new JButton();
 
-        play.setBounds(play_x,play_Y,play_width,play_height);
+        play.setBounds(play_x, play_Y, play_width, play_height);
         play.setIcon(playicon);
         play.setBackground(Color.GRAY);
         play.setBorder(BorderFactory.createEmptyBorder());
@@ -51,21 +57,19 @@ public class DownPanel extends Panels implements ActionListener {
         play.setFocusable(false);
 
 
-
         skip.setBackground(Color.GRAY);
-        skip.setBounds(skip_x,skip_Y,skip_width,skip_height);
+        skip.setBounds(skip_x, skip_Y, skip_width, skip_height);
         skip.setIcon(skipicon);
         skip.setBorder(BorderFactory.createEmptyBorder());
         skip.setFocusPainted(false);
         skip.setFocusable(false);
 
         rewind.setBackground(Color.GRAY);
-        rewind.setBounds(rewind_x,rewind_Y,rewind_width,rewind_height);
+        rewind.setBounds(rewind_x, rewind_Y, rewind_width, rewind_height);
         rewind.setIcon(rewindicon);
         rewind.setBorder(BorderFactory.createEmptyBorder());
         rewind.setFocusPainted(false);
         rewind.setFocusable(false);
-
 
 
         SwingUtilities.invokeLater(() -> {
@@ -78,34 +82,48 @@ public class DownPanel extends Panels implements ActionListener {
 
 
     }
-    protected ImageIcon processimage(String FILE,int width,int height){
+
+    protected ImageIcon processimage(String FILE, int width, int height) {
         ImageIcon icon = new ImageIcon(FILE);
         Image image = icon.getImage();
-        Image newing = image.getScaledInstance(width, height,  Image.SCALE_SMOOTH);
+        Image newing = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
         icon = new ImageIcon(newing);
         return icon;
     }
+
     @Override
-    public void actionPerformed(ActionEvent e){
+    public void actionPerformed(ActionEvent e) {
         if (e.getSource() == play) {
             if (state == false) {
                 play.setIcon(pauseicon);
-
-                // Use a loop for continuous playback
-                while (state == false) {
+                executorService.execute(() -> {
                     try {
                         cl.handleDownloadAndDelete();
                     } catch (InterruptedException ex) {
                         throw new RuntimeException(ex);
                     }
-                }
+                });
 
             } else {
                 play.setIcon(playicon);
+                executorService.close();
                 state = false;
             }
-        }
-    }
 
+        } else if (e.getSource() == skip) {
+            // Handle skip button click
+            executorService.execute(() -> {
+                try {
+                    System.out.println("s");
+                    cl.handleSkip(); // Add a method in your Client class to handle skipping
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+
+        }
+
+    }
 }
+
 

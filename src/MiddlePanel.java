@@ -5,9 +5,13 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.Socket;
 import java.util.LinkedList;
+import java.util.TimerTask;
 import java.util.concurrent.Flow;
-
+import java.util.Timer;
 public class MiddlePanel extends Panels {
+    private final Object lock = new Object();
+    private boolean isTaskRunning = false; // Nowa zmienna kontrolna
+
     final int x = 0;
     final int y = 0;
     final int width = 1024;
@@ -27,9 +31,33 @@ public class MiddlePanel extends Panels {
         cs = cl.getClientSocket();
         SwingUtilities.invokeLater(() -> {
             initGUI();
+            startAutoRefresh();
         });
     }
-
+    private void startAutoRefresh() {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                synchronized (lock) { // Synchronizacja w celu uniknięcia równoczesnego dostępu
+                    if (!isTaskRunning) {
+                        isTaskRunning = true;
+                        SwingUtilities.invokeLater(() -> {
+                            listModel.removeAllElements();
+                            queuelist = cl.handleViewQueue();
+                            for (String i : queuelist) {
+                                JButton button = new JButton(i);
+                                button.setFocusable(false);
+                                button.addActionListener(new ButtonClickListener());
+                                listModel.addElement(button);
+                            }
+                            isTaskRunning = false;
+                        });
+                    }
+                }
+            }
+        }, 0, 3000); // Odświeżaj co 3000 milisekund (czyli co 3 sekundy)
+    }
     private void initGUI() {
        // queuelist = cl.handleViewQueue();
       /* for (String i : queuelist) {
@@ -82,6 +110,7 @@ public class MiddlePanel extends Panels {
 
         // Add ActionListener to the buttons
         addButton.addActionListener(e -> {
+            isTaskRunning = true;
             JFileChooser fileChooser = new JFileChooser();
             int response = fileChooser.showOpenDialog(null);
             if (response == JFileChooser.APPROVE_OPTION) {
@@ -90,8 +119,9 @@ public class MiddlePanel extends Panels {
                 newButton.addActionListener(new ButtonClickListener());
                 FileUploadWorker uploadWorker = new FileUploadWorker(file.getAbsolutePath(), file.getName(), cs);
                 uploadWorker.execute();
-                listModel.addElement(newButton);
+                isTaskRunning = false;
             }
+
         });
 
         removeButton.addActionListener(e -> {

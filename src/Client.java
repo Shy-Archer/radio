@@ -11,6 +11,7 @@ import javax.sound.sampled.*;
 public class Client implements LineListener {
 
     boolean isPlaybackCompleted;
+    private static volatile boolean shouldSkip = false;
 
     @Override
     public void update(LineEvent event) {
@@ -86,7 +87,7 @@ public class Client implements LineListener {
         }
     }
 
-    private static void handleSkip() {
+    public static void handleSkip() {
         try {
             PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
             printWriter.write("skip");
@@ -95,9 +96,11 @@ public class Client implements LineListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        shouldSkip =true;
     }
 
-    public  void handleDownloadAndDelete() throws InterruptedException {
+    public static void handleDownloadAndDelete() throws InterruptedException {
         try {
             PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
             printWriter.write("download_and_delete");
@@ -143,7 +146,7 @@ public class Client implements LineListener {
             playAudio(filename);
 
 
-            Thread.sleep(5000);
+
 
             // Usuwanie pliku na końcu
             File fileToDelete = new File(filename);
@@ -177,7 +180,15 @@ public class Client implements LineListener {
             MP3Player mp3player = new MP3Player(new File(filename));
 
             mp3player.play();
-            if (!mp3player.isPaused()){}
+            while(!mp3player.isStopped()&& !shouldSkip) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            handleDownloadAndDelete();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -244,7 +255,7 @@ public class Client implements LineListener {
     Client() throws IOException {
         try{
         clientSocket = new Socket("127.0.0.1", PORT);
-
+        MP3Player mp3player = new MP3Player();
         System.out.println("Connected to the server.");}
         catch (IOException e) {
             e.printStackTrace();
