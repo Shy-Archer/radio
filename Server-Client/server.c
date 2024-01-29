@@ -232,6 +232,8 @@ void handleViewQueue(int clientSocket, AudioQueue* audioQueue) {
     qlen = 0;
     bzero(queueInfo, sizeof(queueInfo));
 }
+
+
 void sendFileFromQueue(int clientSocket, AudioQueue* audioQueue) {
     char filename[MAX_FILENAME_SIZE];
     bzero(filename, sizeof(filename));
@@ -282,6 +284,47 @@ void sendFileFromQueue(int clientSocket, AudioQueue* audioQueue) {
     dequeue(audioQueue);
 }
 
+
+void removeFromQueue(AudioQueue* audioQueue, const char* filename) {
+    sem_wait(&audioQueue->mutex);  // Wait for the semaphore
+    if (isQueueEmpty(audioQueue)) {
+        printf("Queue is empty. Cannot remove.\n\n");
+        sem_post(&audioQueue->mutex);  // Release the semaphore
+        return;
+    }
+
+    int i = audioQueue->front;
+    while (i != (audioQueue->rear + 1) % MAX_QUEUE_SIZE) {
+        if (strcmp(audioQueue->queue[i].filename, filename) == 0) {
+            // Plik znaleziony, usuń go z kolejki
+            printf("Removed from queue: %s\n", filename);
+
+            if (audioQueue->front == audioQueue->rear) {
+                // Kolejka ma tylko jedną pozycję
+                initQueue(audioQueue);
+            } else {
+                // Przesuń elementy, aby zapełnić lukę
+                int j = i;
+                while (j != audioQueue->rear) {
+                    strcpy(audioQueue->queue[j].filename, audioQueue->queue[(j + 1) % MAX_QUEUE_SIZE].filename);
+                    j = (j + 1) % MAX_QUEUE_SIZE;
+                }
+                audioQueue->rear = (audioQueue->rear - 1 + MAX_QUEUE_SIZE) % MAX_QUEUE_SIZE;
+            }
+
+            sem_post(&audioQueue->mutex);  // Release the semaphore
+            return;
+        }
+
+        i = (i + 1) % MAX_QUEUE_SIZE;
+    }
+
+    // Plik nie znaleziony w kolejce
+    printf("File not found in the queue: %s\n\n", filename);
+    sem_post(&audioQueue->mutex);  // Release the semaphore
+}
+
+
 void handleClientRequest(int clientSocket, AudioQueue* audioQueue) {
     while (1) {
         if (clientSocket < 0) {
@@ -321,6 +364,20 @@ void handleClientRequest(int clientSocket, AudioQueue* audioQueue) {
         } 
         else if (strcmp(buffer, "download_and_delete") == 0) {
             sendFileFromQueue(clientSocket, audioQueue);}
+        else if (strcmp(buffer, "delete") == 0) {
+                sleep(1);
+                char filename[MAX_FILENAME_SIZE];
+                bzero(filename, sizeof(filename));
+
+                // Odbieranie nazwy pliku do usunięcia od klienta
+                if (recv(clientSocket, filename, sizeof(filename), 0) <= 0) {
+                    perror("Error receiving filename from client");
+                    return;
+                }
+                printf("filename: %s\n", filename);
+                // Usunięcie pliku z kolejki
+                removeFromQueue(audioQueue, filename);
+            }
         else {
             printf("Unknown command received.\n\n");
         }

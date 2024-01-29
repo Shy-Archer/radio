@@ -85,12 +85,24 @@ public class DownPanel extends Panels implements ActionListener {
 
     }
 
-    protected ImageIcon processimage(String FILE, int width, int height) {
-        ImageIcon icon = new ImageIcon(FILE);
-        Image image = icon.getImage();
-        Image newing = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-        icon = new ImageIcon(newing);
-        return icon;
+//    protected ImageIcon processimage(String FILE, int width, int height) {
+//               ImageIcon icon = new ImageIcon(FILE);
+//        Image image = icon.getImage();
+//        Image newing = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+//        icon = new ImageIcon(newing);
+//        return icon;
+//    }
+    protected ImageIcon processimage(String filename, int width, int height) {
+        URL imageURL = getClass().getClassLoader().getResource("Images/" + filename);
+        if (imageURL != null) {
+            ImageIcon icon = new ImageIcon(imageURL);
+            Image image = icon.getImage();
+            Image newImage = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            return new ImageIcon(newImage);
+        } else {
+            System.err.println("Nie można znaleźć pliku obrazu: " + filename);
+            return null;
+        }
     }
 
     @Override

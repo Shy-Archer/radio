@@ -158,8 +158,20 @@ public class MiddlePanel extends Panels {
                 buttonList.setSelectedIndex(selectedIndex + 1);
             }
         });
-        JButton viewQueueButton = new JButton("View Queue");
 
+        JButton viewQueueButton = new JButton("View Queue");
+        viewQueueButton.addActionListener(e -> {
+            listModel.removeAllElements();
+            queuelist = cl.handleViewQueue();
+            for (String i : queuelist) {
+                JButton button = new JButton(i);
+                button.setFocusable(false);
+                button.addActionListener(new ButtonClickListener());
+
+
+                listModel.addElement(button);
+            }
+        });
 
         // Create a panel to hold buttons
         JPanel buttonPanel = new JPanel();
