@@ -1,8 +1,10 @@
+package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.Socket;
+import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 public class DownPanel extends Panels implements ActionListener {
@@ -33,10 +35,10 @@ public class DownPanel extends Panels implements ActionListener {
     JButton rewind;
     boolean state = false;
     private ExecutorService executorService;
-    ImageIcon playicon = processimage("Images/play-button.png", 50, 50);
-    ImageIcon skipicon = processimage("Images/skip-button.png", 50, 50);
-    ImageIcon rewindicon = processimage("Images/fast-rewind-button.png", 35, 35);
-    ImageIcon pauseicon = processimage("Images/video-pause-button.png", 50, 50);
+    ImageIcon playicon = processimage("play-button.png", 50, 50);
+    ImageIcon skipicon = processimage("skip-button.png", 50, 50);
+    ImageIcon rewindicon = processimage("fast-rewind-button.png", 35, 35);
+    ImageIcon pauseicon = processimage("video-pause-button.png", 50, 50);
 
     DownPanel(Client client) {
         cl = client;
@@ -106,7 +108,7 @@ public class DownPanel extends Panels implements ActionListener {
 
             } else {
                 play.setIcon(playicon);
-                executorService.close();
+
                 state = false;
             }
 

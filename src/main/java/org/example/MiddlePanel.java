@@ -1,3 +1,4 @@
+package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -6,7 +7,6 @@ import java.io.File;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.TimerTask;
-import java.util.concurrent.Flow;
 import java.util.Timer;
 public class MiddlePanel extends Panels {
     private final Object lock = new Object();
@@ -31,7 +31,7 @@ public class MiddlePanel extends Panels {
         cs = cl.getClientSocket();
         SwingUtilities.invokeLater(() -> {
             initGUI();
-            startAutoRefresh();
+            //startAutoRefresh();
         });
     }
     private void startAutoRefresh() {
@@ -119,6 +119,11 @@ public class MiddlePanel extends Panels {
                 newButton.addActionListener(new ButtonClickListener());
                 FileUploadWorker uploadWorker = new FileUploadWorker(file.getAbsolutePath(), file.getName(), cs);
                 uploadWorker.execute();
+                try {
+                    Thread.sleep(7000);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
                 isTaskRunning = false;
             }
 
@@ -127,7 +132,11 @@ public class MiddlePanel extends Panels {
         removeButton.addActionListener(e -> {
             int selectedIndex = buttonList.getSelectedIndex();
             if (selectedIndex != -1) {
+                JButton selectedButton = listModel.getElementAt(selectedIndex);
+                String songToRemove = selectedButton.getText();
                 listModel.remove(selectedIndex);
+                //buttonList.remove(selectedIndex);
+                cl.handleRemoveSong(songToRemove);
             }
         });
         upButton.addActionListener(e-> {

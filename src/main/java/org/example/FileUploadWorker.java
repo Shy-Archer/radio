@@ -1,3 +1,4 @@
+package org.example;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,7 +39,7 @@ public class FileUploadWorker extends SwingWorker<Void, Void> {
             // Sending file name to server
             printWriter.write(filename);
             printWriter.flush();
-            Thread.sleep(1000);
+            Thread.sleep(2000);
             String fileDataSignal = "START_FILE_DATA";
             printWriter.write(fileDataSignal);
             printWriter.flush();

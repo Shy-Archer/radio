@@ -1,3 +1,4 @@
+package org.example;
 import java.io.File;
 
 import jaco.mp3.player.MP3Player;
@@ -102,7 +103,21 @@ public class Client implements LineListener {
 
         shouldSkip =true;
     }
-
+    public void handleRemoveSong(String songToRemove) {
+        try {
+            PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);
+            printWriter.write("delete");
+            printWriter.flush();
+            Thread.sleep(2000);
+            // Wysyłamy nazwę utworu do usunięcia
+            printWriter.write(songToRemove);
+            printWriter.flush();
+            Thread.sleep(2000);
+            System.out.println("Removing song... ");
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
     public static void handleDownloadAndDelete() throws InterruptedException {
         try {
             PrintWriter printWriter = new PrintWriter(clientSocket.getOutputStream(), true);

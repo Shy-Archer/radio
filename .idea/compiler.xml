@@ -9,5 +9,8 @@
         <module name="radio" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="maven" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>
