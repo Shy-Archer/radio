@@ -1,67 +1,69 @@
-# 🎧 Radio Internetowe – projekt klient-serwer
+# 🎧 Internet Radio – Client-Server Audio Streaming System
 
-Projekt zrealizowany w ramach kursu **Sieci Komputerowe**, umożliwiający przesyłanie, przeglądanie, pobieranie i usuwanie plików dźwiękowych za pomocą architektury klient-serwer.
+A university project for the **Computer Networks** course. This system allows users to upload, browse, download, and remove MP3 audio files using a custom client-server architecture over TCP.
 
-## 📌 Opis projektu
+## 📌 Project Overview
 
-System składa się z:
-- **Serwera** napisanego w języku **C**, obsługującego kolejkę plików audio,
-- **Klienta** napisanego w języku **Java** z wykorzystaniem **Swing**, umożliwiającego komunikację z serwerem przez **TCP**.
+The application consists of:
+- A **server** written in **C** that handles audio file queue management and client requests.
+- A **client** written in **Java** using **Swing** for the GUI, enabling interaction with the server.
 
-## 🛠️ Technologie
+Communication between client and server is handled via **TCP sockets**.
 
-- **Języki programowania**: C (serwer), Java (klient)
+## 🛠️ Technologies Used
+
+- **Programming Languages**: C (server), Java (client)
 - **GUI**: Java Swing
-- **Protokoły**: TCP
-- **Biblioteka audio**: JACo MP3 Player (do odtwarzania dźwięku)
+- **Networking**: TCP
+- **Audio Playback**: JACo MP3 Player library
 
-## 🧩 Funkcjonalności
+## 🧩 Features
 
-### Serwer
-- Utrzymuje kolejkę plików dźwiękowych (`AudioQueue`)
-- Obsługuje połączenia od wielu klientów z synchronizacją przez semafory
-- Obsługiwane żądania:
-  - `handleUpload` – dodanie pliku do kolejki
-  - `handleViewQueue` – przesyłanie listy plików
-  - `sendFileFromQueue` – przesyłanie pliku do klienta
-  - `removeFromQueue` – usunięcie pliku z kolejki
-  - `handleQuit` – zamknięcie połączenia
+### Server
+- Maintains a queue of audio files (`AudioQueue`)
+- Handles multiple client connections with synchronization (mutex semaphore)
+- Supported operations:
+  - `handleUpload` – receives and queues audio files from client
+  - `handleViewQueue` – sends current queue status to client
+  - `sendFileFromQueue` – streams a file to client
+  - `removeFromQueue` – removes a specific file from the queue
+  - `handleQuit` – closes the client connection
 
-### Klient
-- Nawiązuje połączenie z serwerem przez gniazdo TCP
-- Obsługuje:
-  - Wysyłanie plików (`handleUpload`)
-  - Przeglądanie kolejki (`handleViewQueue`)
-  - Pobieranie i odtwarzanie pliku (`handleDownloadAndDelete`)
-  - Usuwanie pliku (`handleRemoveSong`)
-- Odtwarza pliki MP3 dzięki bibliotece JACo MP3 Player
-- Polling co sekundę sprawdza stan kolejki
+### Client
+- Connects to the server over TCP
+- Provides a GUI to:
+  - Upload MP3 files to the server
+  - Browse the server-side file queue
+  - Download and play MP3 files (using JACo MP3 Player)
+  - Remove files from the queue
+- Uses polling every second to update queue status
 
-## 📦 Jak uruchomić?
+## 📦 How to Run
 
-### Serwer (C)
-1. Skompiluj serwer:
+### Server (C)
+1. Compile the server:
    ```bash
    gcc server.c -o server -lpthread
    ```
-2. Uruchom:
+2. Run the server:
     ```
     ./server
     ```
-### Klient (Java)
+    
+### Client (Java)
 
-1. Otwórz projekt w IDE (np. IntelliJ, Eclipse)
+1. Open the client project in your Java IDE (e.g. IntelliJ, Eclipse)
 
-2. Upewnij się, że biblioteka JACo MP3 Player jest dołączona
+2. Make sure the JACo MP3 Player library is added to the project dependencies
 
-3. Uruchom klasę główną klienta
+3. Run the main client class
 
-## 👨‍💻 Autorzy
+## 👨‍💻 Authors
 
 - Łukasz Walicki (151061)
 
 - Jacek Młynarczyk (151747)
 
-## 📄 Licencja
+## 📄  License
 
-Projekt edukacyjny – brak formalnej licencji.
+This project was developed for academic and educational purposes.
